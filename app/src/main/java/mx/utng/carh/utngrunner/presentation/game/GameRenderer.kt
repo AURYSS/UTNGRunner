@@ -8,7 +8,6 @@ import android.graphics.Path
 import android.graphics.RectF
 import android.graphics.Shader
 import android.graphics.Typeface
-import android.util.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.TextUnit
@@ -26,30 +25,30 @@ import kotlin.math.sin
 object GameRenderer {
     private val COLORS = GameColors()
 
-    fun draw(canvas: Canvas, size: Size, state: GameState, frame: Long) {
-        drawBackground(canvas, size)
-        drawGround(canvas, size)
+    fun draw(canvas: Canvas, width: Float, height: Float, state: GameState, frame: Long) {
+        drawBackground(canvas, width, height)
+        drawGround(canvas, width, height)
         drawCoins(canvas, state.coins, frame)
         drawObstacles(canvas, state.obstacles)
         drawPlayer(canvas, state.player, frame)
-        drawHUD(canvas, size, state)
+        drawHUD(canvas, width, height, state)
     }
 
-    private fun drawBackground(canvas: Canvas, size: Size) {
+    private fun drawBackground(canvas: Canvas, width: Float, height: Float) {
         val paint = Paint().apply {
             shader = LinearGradient(
-                0f, 0f, 0f, size.height.toFloat(),
+                0f, 0f, 0f, height,
                 COLORS.skyTop.toArgb(), COLORS.skyBottom.toArgb(),
                 Shader.TileMode.CLAMP
             )
         }
-        canvas.drawRect(0f, 0f, size.width.toFloat(), size.height.toFloat(), paint)
+        canvas.drawRect(0f, 0f, width, height, paint)
     }
 
-    private fun drawGround(canvas: Canvas, size: Size) {
+    private fun drawGround(canvas: Canvas, width: Float, height: Float) {
         val paint = Paint().apply { color = COLORS.ground.toArgb() }
         val groundY = Player.FLOOR_Y + 20f
-        canvas.drawRect(0f, groundY, size.width.toFloat(), size.height.toFloat(), paint)
+        canvas.drawRect(0f, groundY, width, height, paint)
     }
 
     private fun drawPlayer(canvas: Canvas, player: Player, frame: Long) {
@@ -103,14 +102,14 @@ object GameRenderer {
         }
     }
 
-    private fun drawHUD(canvas: Canvas, size: Size, state: GameState) {
-        val cx = size.width / 2f
+    private fun drawHUD(canvas: Canvas, width: Float, height: Float, state: GameState) {
+        val cx = width / 2f
         drawCenteredText(canvas, getSystemTime(), cx, 30f, 14.sp, Color.White)
-        drawCenteredText(canvas, "${state.score} pts", cx, size.height - 20f, 12.sp, Color.Yellow)
+        drawCenteredText(canvas, "${state.score} pts", cx, height - 20f, 12.sp, Color.Yellow)
         
         // Ritmo cardíaco
         val hrColor = if (state.heartRate > 100) Color.Red else Color.Cyan
-        drawCenteredText(canvas, "💓 ${state.heartRate} BPM", 60f, size.height - 20f, 10.sp, hrColor)
+        drawCenteredText(canvas, "💓 ${state.heartRate} BPM", 60f, height - 20f, 10.sp, hrColor)
 
         // Vidas
         repeat(state.lives) { i ->

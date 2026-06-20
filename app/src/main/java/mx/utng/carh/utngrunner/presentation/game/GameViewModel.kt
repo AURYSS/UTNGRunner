@@ -1,7 +1,10 @@
 package mx.utng.carh.utngrunner.presentation.game
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewModelScope
+import androidx.health.services.client.HealthServices
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -9,7 +12,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import mx.utng.carh.utngrunner.presentation.data.datasource.PreferencesDataSource
 import mx.utng.carh.utngrunner.presentation.data.health.HeartRateDataSource
+import mx.utng.carh.utngrunner.presentation.data.repository.ScoreRepositoryImpl
 import mx.utng.carh.utngrunner.presentation.domain.model.GamePhase
 import mx.utng.carh.utngrunner.presentation.domain.model.GameState
 import mx.utng.carh.utngrunner.presentation.domain.model.Player as GamePlayer
@@ -21,6 +26,26 @@ class GameViewModel(
     private val saveHighScore: SaveHighScoreUseCase,
     private val heartRateSource: HeartRateDataSource
 ) : ViewModel() {
+
+    // Factory para instanciar sin Hilt/Koin
+    companion object {
+        val Factory: ViewModelProvider.Factory = object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
+                val context = checkNotNull(extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY])
+                val prefs = PreferencesDataSource(context)
+                val repo = ScoreRepositoryImpl(prefs)
+                val healthClient = HealthServices.getClient(context)
+                val hrSource = HeartRateDataSource(healthClient)
+                
+                return GameViewModel(
+                    GetHighScoreUseCase(repo),
+                    SaveHighScoreUseCase(repo),
+                    hrSource
+                ) as T
+            }
+        }
+    }
     private val _state = MutableStateFlow(GameState())
     val state: StateFlow<GameState> = _state.asStateFlow()
     private var gameFrame = 0L

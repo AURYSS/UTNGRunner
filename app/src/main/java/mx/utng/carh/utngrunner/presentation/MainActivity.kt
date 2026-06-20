@@ -28,13 +28,16 @@ import androidx.wear.compose.material3.lazy.transformedHeight
 import androidx.wear.compose.ui.tooling.preview.WearPreviewDevices
 import androidx.wear.compose.ui.tooling.preview.WearPreviewFontScales
 import mx.utng.carh.utngrunner.R
+import mx.utng.carh.utngrunner.presentation.game.GameScreen
 import mx.utng.carh.utngrunner.presentation.theme.UTNGRunnerTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            WearApp("Android")
+            UTNGRunnerTheme {
+                GameScreen()
+            }
         }
     }
 }
