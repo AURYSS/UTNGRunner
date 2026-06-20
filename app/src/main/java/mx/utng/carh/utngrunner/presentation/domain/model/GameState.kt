@@ -1,6 +1,6 @@
 package mx.utng.carh.utngrunner.presentation.domain.model
 
-import androidx.media3.common.Player
+import mx.utng.carh.utngrunner.presentation.domain.model.Player as GamePlayer
 
 /** Estado inmutable del juego — Unidireccional Data Flow */
 data class GameState(
@@ -9,7 +9,7 @@ data class GameState(
     val level: Int = 1,
     val lives: Int = 3,
     val highScore: Int = 0,
-    val player: Player = Player(),
+    val player: GamePlayer = GamePlayer(),
     val obstacles: List<Obstacle> = emptyList(),
     val coins: List<Coin> = emptyList(),
     val heartRate: Int = 72,
