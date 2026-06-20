@@ -6,10 +6,12 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewModelScope
 import androidx.health.services.client.HealthServices
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import mx.utng.carh.utngrunner.presentation.data.datasource.PreferencesDataSource
@@ -20,6 +22,8 @@ import mx.utng.carh.utngrunner.presentation.domain.model.GameState
 import mx.utng.carh.utngrunner.presentation.domain.model.Player as GamePlayer
 import mx.utng.carh.utngrunner.presentation.domain.usecase.GetHighScoreUseCase
 import mx.utng.carh.utngrunner.presentation.domain.usecase.SaveHighScoreUseCase
+
+enum class HapticType { JUMP, HIT }
 
 class GameViewModel(
     private val getHighScore: GetHighScoreUseCase,
@@ -48,6 +52,10 @@ class GameViewModel(
     }
     private val _state = MutableStateFlow(GameState())
     val state: StateFlow<GameState> = _state.asStateFlow()
+    
+    private val _hapticChannel = Channel<HapticType>(Channel.CONFLATED)
+    val hapticEvents = _hapticChannel.receiveAsFlow()
+
     private var gameFrame = 0L
     private var gameJob: Job? = null
 
@@ -67,7 +75,13 @@ class GameViewModel(
             // 60 fps → ~16ms por frame
             while (_state.value.phase == GamePhase.PLAYING) {
                 delay(16L)
-                _state.update { GameEngine.update(it, gameFrame++) }
+                _state.update { 
+                    val next = GameEngine.update(it, gameFrame++)
+                    if (next.lives < it.lives) {
+                        _hapticChannel.trySend(HapticType.HIT)
+                    }
+                    next
+                }
             }
             if (_state.value.phase == GamePhase.DEAD) {
                 saveHighScore(_state.value.score)
@@ -82,6 +96,7 @@ class GameViewModel(
             GamePhase.IDLE, GamePhase.DEAD -> startGame()
             GamePhase.PLAYING -> {
                 if (!s.player.isJumping && s.player.y >= GamePlayer.FLOOR_Y - 5f) {
+                    _hapticChannel.trySend(HapticType.JUMP)
                     _state.update { it.copy(player = it.player.copy(                         
                         velocityY = GamePlayer.JUMP_VELOCITY, isJumping = true
                     ))}

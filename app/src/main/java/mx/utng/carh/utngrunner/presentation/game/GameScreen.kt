@@ -22,7 +22,9 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.rotary.onRotaryScrollEvent
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -48,6 +50,16 @@ fun GameScreen(
 
     val focusRequester = remember { FocusRequester() }
     LaunchedEffect(Unit) { focusRequester.requestFocus() }
+
+    val hapticFeedback = LocalHapticFeedback.current
+    LaunchedEffect(Unit) {
+        viewModel.hapticEvents.collect { type ->
+            when (type) {
+                HapticType.JUMP -> hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                HapticType.HIT -> hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+            }
+        }
+    }
 
     Box(
         modifier = Modifier
